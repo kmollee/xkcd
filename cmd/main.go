@@ -12,7 +12,7 @@ import (
 
 var (
 	Info  = log.New(ioutil.Discard, "INFO: ", log.Ldate|log.Ltime|log.Lshortfile)
-	Error = log.New(os.Stdout, "Error: ", log.Ldate|log.Ltime|log.Lshortfile)
+	Error = log.New(os.Stderr, "Error: ", log.Ldate|log.Ltime|log.Lshortfile)
 )
 
 func main() {
