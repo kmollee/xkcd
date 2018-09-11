@@ -1,3 +1,4 @@
+// Package xkcd :parse xkcd API, and download comic image
 package xkcd
 
 import (
@@ -45,7 +46,8 @@ func (c Comic) getFilename() string {
 // Update :update comic id and fetch the meta
 func (c *Comic) Update(id int) error {
 	c.ID = id
-	return c.fetchMeta()
+	err := c.fetchMeta()
+	return err
 }
 
 func fetchURL(URL string) ([]byte, error) {
