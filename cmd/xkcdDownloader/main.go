@@ -85,7 +85,7 @@ func main() {
 	case *comicID > 0:
 		// single comic
 		comic := xkcd.NewComic()
-		Info.Printf("Start download comic id %d\n", comicID)
+		Info.Printf("Start download comic id %d\n", *comicID)
 		if err := comic.Update(*comicID); err != nil {
 			log.Fatal(err)
 		}
