@@ -11,12 +11,12 @@ import (
 )
 
 var (
-	Info  = log.New(ioutil.Discard, "INFO: ", log.Ldate|log.Ltime|log.Lshortfile)
-	Error = log.New(os.Stderr, "Error: ", log.Ldate|log.Ltime|log.Lshortfile)
+	logInfo = log.New(ioutil.Discard, "INFO: ", log.Ldate|log.Ltime)
+	logErr  = log.New(os.Stderr, "Error: ", log.Ldate|log.Ltime)
 )
 
 func main() {
-	comicID := flag.Int("id", -1, "comic <ID>")
+	ID := flag.Int("id", -1, "comic <ID>")
 	all := flag.Bool("all", false, "get all comic")
 	last := flag.Bool("last", false, "get last comic")
 	worker := flag.Int("work", 3, "worker to download")
@@ -25,7 +25,7 @@ func main() {
 	flag.Parse()
 
 	if *verbose {
-		Info.SetOutput(os.Stdout)
+		logInfo.SetOutput(os.Stdout)
 	}
 
 	if *worker < 1 {
@@ -44,7 +44,7 @@ func main() {
 	switch {
 	case *last:
 		comic, err := xkcd.FetchLast()
-		Info.Printf("Start download comic id %d\n", comic.ID)
+		logInfo.Printf("Start download comic id %d\n", comic.ID)
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -60,16 +60,16 @@ func main() {
 
 		for i := 1; i <= *worker; i++ {
 			wg.Add(1)
-			go func(job <-chan int) {
+			go func(epics <-chan int) {
 				comic := xkcd.NewComic()
-				for comicID := range job {
-					Info.Printf("Start download comic id %d\n", comicID)
-					if err := comic.Update(comicID); err != nil {
-						Error.Printf("\tcomic id %d fail: %v\n", comicID, err)
+				for epic := range epics {
+					logInfo.Printf("Start download comic id %d\n", epic)
+					if err := comic.Update(epic); err != nil {
+						logErr.Printf("\tcomic id %d fail: %v\n", epic, err)
 						continue
 					}
 					if err := comic.SaveTo(outDir); err != nil {
-						Error.Printf("\tcomic id %d fail save: %v\n", comicID, err)
+						logErr.Printf("\tcomic id %d fail save: %v\n", epic, err)
 						continue
 					}
 				}
@@ -81,12 +81,12 @@ func main() {
 		}
 		close(comicCh)
 		wg.Wait()
-		Info.Println("Complete all job....")
-	case *comicID > 0:
+		logInfo.Println("Complete all job....")
+	case *ID > 0:
 		// single comic
 		comic := xkcd.NewComic()
-		Info.Printf("Start download comic id %d\n", *comicID)
-		if err := comic.Update(*comicID); err != nil {
+		logInfo.Printf("Start download comic id %d\n", *ID)
+		if err := comic.Update(*ID); err != nil {
 			log.Fatal(err)
 		}
 		if err := comic.SaveTo(outDir); err != nil {
