@@ -2,44 +2,16 @@
 
 this is a mini project, download xkcd comic
 
-
-## example
-
-download xkcd first comic: id 1
-
-```go
-package main
-
-import (
-    "github.com/kmollee/xkcd"
-    "log"
-)
-
-func main(){
-    targetComicID := 1
-
-    comic := xkcd.NewComic()
-    if err := comic.Update(targetComicID); err != nil {
-        log.Fatal(err)
-    }
-    if err := comic.SaveTo("./"); err != nil {
-        log.Fatal(err)
-    }
-}
-```
-
 ## build
 
-```sh
-go get github.com/kmollee/xkcd
-cd $GOPATH/github.com/kmollee/xkcd/cmd && go build -o xkcd
-./xkcd
+```
+go install github.com/kmollee/xkcd/cmd/xkcdDownloader
 ```
 
 ## how to use it
 
 ```
-Usage of ./xkcd:
+Usage of xkcdDownloader:
   -all
         get all comic
   -id int
