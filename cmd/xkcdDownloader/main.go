@@ -28,6 +28,10 @@ func main() {
 		Info.SetOutput(os.Stdout)
 	}
 
+	if *worker < 1 {
+		log.Fatalf("worker could not lower than 1")
+	}
+
 	outDir := *out
 	if *out == "" {
 		pwd, err := os.Getwd()
