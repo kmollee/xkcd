@@ -2,13 +2,12 @@
 package xkcd
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"net/http"
-	"os"
-	"path"
-	"path/filepath"
 )
 
 /*
@@ -39,7 +38,8 @@ type Comic struct {
 	ImageURL    string `json:"img"`
 }
 
-func (c Comic) getFilename() string {
+// GetFilename :using comic id-year-month-day as filename
+func (c Comic) GetFilename() string {
 	return fmt.Sprintf("%d_%s_%s_%s.png", c.ID, c.Year, c.Month, c.Day)
 }
 
@@ -77,37 +77,16 @@ func (c *Comic) fetchMeta() error {
 	return nil
 }
 
-// SaveTo :save image to directory
-func (c *Comic) SaveTo(dirPath string) error {
-	dir, err := os.Stat(dirPath)
-	if err != nil {
-		return err
-	}
-	if !dir.IsDir() {
-		return fmt.Errorf("could not save, the path is not directory")
-	}
-
-	d, err := filepath.Abs(dirPath)
-	if err != nil {
-		return err
-	}
-
-	filePath := path.Join(d, c.getFilename())
+// SaveTo :save image
+func (c *Comic) SaveTo(w io.Writer) error {
 
 	img, err := fetchURL(c.ImageURL)
 	if err != nil {
 		return fmt.Errorf("fetch image fail: %v", err)
 	}
-
-	return ioutil.WriteFile(filePath, img, 0666)
-	// f, err := os.Create(filePath)
-	// if err != nil {
-	// 	return err
-	// }
-	// defer f.Close()
-
-	// _, err = f.Write(img)
-	// return err
+	b := bytes.NewReader(img)
+	_, err = io.Copy(w, b)
+	return err
 }
 
 // NewComic :crete comic

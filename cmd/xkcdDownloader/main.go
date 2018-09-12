@@ -2,9 +2,12 @@ package main
 
 import (
 	"flag"
+	"fmt"
 	"io/ioutil"
 	"log"
 	"os"
+	"path"
+	"path/filepath"
 	"sync"
 
 	"github.com/kmollee/xkcd"
@@ -14,6 +17,38 @@ var (
 	logInfo = log.New(ioutil.Discard, "INFO: ", log.Ldate|log.Ltime)
 	logErr  = log.New(os.Stderr, "Error: ", log.Ldate|log.Ltime)
 )
+
+// create file
+func createFile(dirPath, filename string) (*os.File, error) {
+
+	dir, err := os.Stat(dirPath)
+	if err != nil {
+		return nil, err
+	}
+	if !dir.IsDir() {
+		return nil, fmt.Errorf("could not save, the path is not directory")
+	}
+
+	d, err := filepath.Abs(dirPath)
+	if err != nil {
+		return nil, err
+	}
+
+	filePath := path.Join(d, filename)
+	f, err := os.Create(filePath)
+	return f, err
+}
+
+// save comic []bytes to file
+func saveImg(c *xkcd.Comic, dirPath string) error {
+	f, err := createFile(dirPath, c.GetFilename())
+	if err != nil {
+		return err
+	}
+
+	err = c.SaveTo(f)
+	return err
+}
 
 func main() {
 	ID := flag.Int("id", -1, "comic <ID>")
@@ -48,7 +83,11 @@ func main() {
 		if err != nil {
 			log.Fatal(err)
 		}
-		comic.SaveTo(outDir)
+
+		if err := saveImg(comic, outDir); err != nil {
+			log.Fatal(err)
+		}
+
 	case *all:
 		lastComic, err := xkcd.FetchLast()
 		if err != nil {
@@ -68,7 +107,7 @@ func main() {
 						logErr.Printf("\tcomic id %d fail: %v\n", epic, err)
 						continue
 					}
-					if err := comic.SaveTo(outDir); err != nil {
+					if err := saveImg(comic, outDir); err != nil {
 						logErr.Printf("\tcomic id %d fail save: %v\n", epic, err)
 						continue
 					}
@@ -89,7 +128,7 @@ func main() {
 		if err := comic.Update(*ID); err != nil {
 			log.Fatal(err)
 		}
-		if err := comic.SaveTo(outDir); err != nil {
+		if err := saveImg(comic, outDir); err != nil {
 			log.Fatal(err)
 		}
 	default:

@@ -4,7 +4,7 @@ import (
 	"testing"
 )
 
-func Test_getFilename(t *testing.T) {
+func Test_GetFilename(t *testing.T) {
 	type fields struct {
 		ID    int
 		Year  string
@@ -25,7 +25,7 @@ func Test_getFilename(t *testing.T) {
 	for _, tc := range tt {
 		t.Run(tc.name, func(t *testing.T) {
 			c := Comic{ID: tc.fields.ID, Year: tc.fields.Year, Month: tc.fields.Month, Day: tc.fields.Day}
-			if c.getFilename() != tc.expect {
+			if c.GetFilename() != tc.expect {
 				t.Fatalf("sum of %v should be %v; got: %v", tc.name, tc.expect, c)
 			}
 		})
