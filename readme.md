@@ -5,6 +5,7 @@ this is a mini project, download xkcd comic
 ## build
 
 ```
+go get -v github.com/kmollee/xkcd/
 go install github.com/kmollee/xkcd/cmd/xkcdDownloader
 ```
 
