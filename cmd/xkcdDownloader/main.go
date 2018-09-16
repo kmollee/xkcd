@@ -1,14 +1,17 @@
 package main
 
 import (
+	"context"
 	"flag"
 	"fmt"
 	"io/ioutil"
 	"log"
 	"os"
+	"os/signal"
 	"path"
 	"path/filepath"
 	"sync"
+	"syscall"
 
 	"github.com/kmollee/xkcd"
 )
@@ -76,6 +79,19 @@ func main() {
 		outDir = pwd
 	}
 
+	ctx := context.Background()
+	// trap Ctrl+C and call cancel on the context
+	ctx, cancel := context.WithCancel(ctx)
+
+	c := make(chan os.Signal, 1)
+	signal.Notify(c, os.Interrupt, syscall.SIGTERM)
+	// signal.Notify(c, os.Interrupt)
+
+	go func() {
+		<-c
+		cancel()
+	}()
+
 	switch {
 	case *last:
 		comic, err := xkcd.FetchLast()
@@ -99,26 +115,44 @@ func main() {
 
 		for i := 1; i <= *worker; i++ {
 			wg.Add(1)
-			go func(epics <-chan int) {
+			go func(ctx context.Context, epics <-chan int, outDir string) {
+				defer wg.Done()
 				comic := xkcd.NewComic()
-				for epic := range epics {
-					logInfo.Printf("Start download comic id %d\n", epic)
-					if err := comic.Update(epic); err != nil {
-						logErr.Printf("\tcomic id %d fail: %v\n", epic, err)
-						continue
-					}
-					if err := saveImg(comic, outDir); err != nil {
-						logErr.Printf("\tcomic id %d fail save: %v\n", epic, err)
-						continue
+				for {
+					select {
+					case <-ctx.Done():
+						logInfo.Println("get interupt.. Stoping...")
+						return
+					case epic, _ := <-epics:
+						logInfo.Printf("Start download comic id %d\n", epic)
+
+						if err := comic.Update(epic); err != nil {
+							logErr.Printf("\tcomic id %d fail: %v\n", epic, err)
+							continue
+						}
+						if err := saveImg(comic, outDir); err != nil {
+							logErr.Printf("\tcomic id %d fail save: %v\n", epic, err)
+							continue
+						}
 					}
 				}
-				wg.Done()
-			}(comicCh)
+
+			}(ctx, comicCh, outDir)
 		}
-		for i := 1; i <= lastComic.ID; i++ {
-			comicCh <- i
-		}
-		close(comicCh)
+		go func(ctx context.Context, ch chan<- int) {
+			defer close(ch)
+			for i := 1; i <= lastComic.ID; i++ {
+				select {
+				case <-ctx.Done():
+					logInfo.Println("cancel input....")
+					return
+				default:
+					ch <- i
+				}
+			}
+
+		}(ctx, comicCh)
+
 		wg.Wait()
 		logInfo.Println("Complete all job....")
 	case *ID > 0:
