@@ -55,7 +55,9 @@ func fetchURL(URL string) ([]byte, error) {
 	if err != nil {
 		return nil, fmt.Errorf("could not fetch url %s: %v", URL, err)
 	}
-	defer resp.Body.Close()
+	if resp != nil {
+		defer resp.Body.Close()
+	}
 
 	if resp.StatusCode != http.StatusOK {
 		return nil, fmt.Errorf("reponse is not ok: %v", resp.Status)
