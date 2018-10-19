@@ -123,7 +123,11 @@ func main() {
 					case <-ctx.Done():
 						logInfo.Println("get interupt.. Stoping...")
 						return
-					case epic, _ := <-epics:
+					case epic, ok := <-epics:
+						if !ok {
+							// channel closed
+							return
+						}
 						logInfo.Printf("Start download comic id %d\n", epic)
 
 						if err := comic.Update(epic); err != nil {
