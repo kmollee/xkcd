@@ -2,11 +2,10 @@
 
 this is a mini project, download xkcd comic
 
-## build
+## install
 
 ```
-go get -v github.com/kmollee/xkcd/
-go install github.com/kmollee/xkcd/cmd/xkcdDownloader
+go get -v github.com/kmollee/xkcd/...
 ```
 
 ## how to use it
